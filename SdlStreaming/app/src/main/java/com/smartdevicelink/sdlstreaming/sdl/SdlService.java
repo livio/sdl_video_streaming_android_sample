@@ -133,7 +133,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 
     private boolean firstNonHmiNone = true;
     boolean layoutSet = false;
-    private final boolean enhancedStreamCapable = (android.os.Build.VERSION.SDK_INT >= 21);
+    private final boolean ENHANCED_STREAM_CAPABLE = (android.os.Build.VERSION.SDK_INT >= 21);
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -237,7 +237,7 @@ public class SdlService extends Service implements IProxyListenerALM{
     }
 
     public void startVideoStream(){
-        if(enhancedStreamCapable){
+        if(ENHANCED_STREAM_CAPABLE){
             startEnhancedVideoStream();
             Log.d(TAG, "Enhanced video stream capable.");
         }else{
@@ -281,7 +281,7 @@ public class SdlService extends Service implements IProxyListenerALM{
     }
 
     public void stopVideoStream(){
-        if(enhancedStreamCapable){
+        if(ENHANCED_STREAM_CAPABLE){
             stopEnhancedVideoStream();
         }else{
             stopClassicVideoStream();
