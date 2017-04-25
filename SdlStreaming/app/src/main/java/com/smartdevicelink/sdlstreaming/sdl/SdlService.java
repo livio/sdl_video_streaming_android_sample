@@ -1,15 +1,21 @@
 package com.smartdevicelink.sdlstreaming.sdl;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.hardware.usb.UsbAccessory;
 import android.hardware.usb.UsbManager;
+import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
+import android.view.Display;
 import android.widget.Toast;
+import android.widget.VideoView;
 
+import com.smartdevicelink.encoder.VirtualDisplayEncoder;
 import com.smartdevicelink.exception.SdlException;
 import com.smartdevicelink.proxy.RPCRequest;
 import com.smartdevicelink.proxy.SdlProxyALM;
@@ -119,6 +125,7 @@ public class SdlService extends Service implements IProxyListenerALM{
     private static final int TEST_COMMAND_ID 			= 1;
 
     public static String LOCAL_VIDEO_URI = null;
+    public volatile VirtualDisplayEncoder vdEncoder = new VirtualDisplayEncoder();
 
     // variable to create and call functions of the SyncProxy
     private static SdlProxyALM proxy = null;
@@ -126,6 +133,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 
     private boolean firstNonHmiNone = true;
     boolean layoutSet = false;
+    private final boolean enhancedStreamCapable = (android.os.Build.VERSION.SDK_INT >= 21);
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -141,8 +149,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        //Check if this was started with a flag to force a transport connect
-        setLocalVideo();
+        setLocalVideo(); // Set local video path on runtime
 
         startProxy(intent);
 
@@ -201,12 +208,45 @@ public class SdlService extends Service implements IProxyListenerALM{
         }
     }
 
+    /*
+     * Create a Presentation class that sets ContentView layout and touch response callbacks
+     * Note: It must extend VirtualDisplayEncoder.SdlPresentation!
+     */
+    public static class MyPresentation extends VirtualDisplayEncoder.SdlPresentation{
+
+        public MyPresentation(Context context, Display display) {
+            super(context, display);
+        }
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+            setContentView(R.layout.stream);
+
+            VideoView videoView = (VideoView) findViewById(R.id.videoView);
+
+            videoView.setVideoURI(Uri.parse(LOCAL_VIDEO_URI));
+            videoView.start();
+        }
+    }
+
     public void setLocalVideo(){
-        // Set this to an .mp4 file in res/raw
+        // Set this to an .mp4 file in res/raw during runtime
         LOCAL_VIDEO_URI = "android.resource://" + getApplicationContext().getPackageName() + "/" + R.raw.sdl;
     }
 
     public void startVideoStream(){
+        if(enhancedStreamCapable){
+            startEnhancedVideoStream();
+            Log.d(TAG, "Enhanced video stream capable.");
+        }else{
+            startClassicVideoStream();
+            Log.d(TAG, "Restricted to classic streaming.");
+        }
+    }
+
+    private void startClassicVideoStream(){
         Log.i(TAG, "Starting test.");
         if(proxy == null){
             Log.w(TAG, "Proxy was null still");
@@ -229,10 +269,35 @@ public class SdlService extends Service implements IProxyListenerALM{
         }
     }
 
+    private void startEnhancedVideoStream(){
+        if(vdEncoder != null && proxy != null){
+            try {
+                vdEncoder.init(getApplicationContext(), proxy.startH264(false), MyPresentation.class, proxy.getDisplayCapabilities().getScreenParams());
+                vdEncoder.start();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public void stopVideoStream(){
+        if(enhancedStreamCapable){
+            stopEnhancedVideoStream();
+        }else{
+            stopClassicVideoStream();
+        }
+    }
+
+    private void stopClassicVideoStream(){
         if(cameraTest!=null){
             cameraTest.stop();
             cameraTest = null;
+        }
+    }
+
+    private void stopEnhancedVideoStream(){
+        if(vdEncoder != null){
+            vdEncoder.shutDown();
         }
     }
 
