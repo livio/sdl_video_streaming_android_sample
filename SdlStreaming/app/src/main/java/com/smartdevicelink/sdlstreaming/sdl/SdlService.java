@@ -12,11 +12,14 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
 import android.view.Display;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.smartdevicelink.encoder.VirtualDisplayEncoder;
 import com.smartdevicelink.exception.SdlException;
+import com.smartdevicelink.protocol.enums.SessionType;
 import com.smartdevicelink.proxy.RPCRequest;
 import com.smartdevicelink.proxy.SdlProxyALM;
 import com.smartdevicelink.proxy.SdlProxyBuilder;
@@ -28,6 +31,7 @@ import com.smartdevicelink.proxy.rpc.AddCommandResponse;
 import com.smartdevicelink.proxy.rpc.AddSubMenuResponse;
 import com.smartdevicelink.proxy.rpc.AlertManeuverResponse;
 import com.smartdevicelink.proxy.rpc.AlertResponse;
+import com.smartdevicelink.proxy.rpc.ButtonPressResponse;
 import com.smartdevicelink.proxy.rpc.ChangeRegistrationResponse;
 import com.smartdevicelink.proxy.rpc.CreateInteractionChoiceSetResponse;
 import com.smartdevicelink.proxy.rpc.DeleteCommandResponse;
@@ -39,6 +43,8 @@ import com.smartdevicelink.proxy.rpc.DialNumberResponse;
 import com.smartdevicelink.proxy.rpc.EndAudioPassThruResponse;
 import com.smartdevicelink.proxy.rpc.GenericResponse;
 import com.smartdevicelink.proxy.rpc.GetDTCsResponse;
+import com.smartdevicelink.proxy.rpc.GetInteriorVehicleDataResponse;
+import com.smartdevicelink.proxy.rpc.GetSystemCapabilityResponse;
 import com.smartdevicelink.proxy.rpc.GetVehicleDataResponse;
 import com.smartdevicelink.proxy.rpc.GetWayPointsResponse;
 import com.smartdevicelink.proxy.rpc.ListFiles;
@@ -51,6 +57,7 @@ import com.smartdevicelink.proxy.rpc.OnCommand;
 import com.smartdevicelink.proxy.rpc.OnDriverDistraction;
 import com.smartdevicelink.proxy.rpc.OnHMIStatus;
 import com.smartdevicelink.proxy.rpc.OnHashChange;
+import com.smartdevicelink.proxy.rpc.OnInteriorVehicleData;
 import com.smartdevicelink.proxy.rpc.OnKeyboardInput;
 import com.smartdevicelink.proxy.rpc.OnLanguageChange;
 import com.smartdevicelink.proxy.rpc.OnLockScreenStatus;
@@ -68,10 +75,12 @@ import com.smartdevicelink.proxy.rpc.PutFileResponse;
 import com.smartdevicelink.proxy.rpc.ReadDIDResponse;
 import com.smartdevicelink.proxy.rpc.ResetGlobalPropertiesResponse;
 import com.smartdevicelink.proxy.rpc.ScrollableMessageResponse;
+import com.smartdevicelink.proxy.rpc.SendHapticDataResponse;
 import com.smartdevicelink.proxy.rpc.SendLocationResponse;
 import com.smartdevicelink.proxy.rpc.SetAppIconResponse;
 import com.smartdevicelink.proxy.rpc.SetDisplayLayoutResponse;
 import com.smartdevicelink.proxy.rpc.SetGlobalPropertiesResponse;
+import com.smartdevicelink.proxy.rpc.SetInteriorVehicleDataResponse;
 import com.smartdevicelink.proxy.rpc.SetMediaClockTimerResponse;
 import com.smartdevicelink.proxy.rpc.ShowConstantTbtResponse;
 import com.smartdevicelink.proxy.rpc.ShowResponse;
@@ -93,8 +102,11 @@ import com.smartdevicelink.proxy.rpc.enums.SdlDisconnectedReason;
 import com.smartdevicelink.proxy.rpc.enums.TextAlignment;
 import com.smartdevicelink.sdlstreaming.R;
 import com.smartdevicelink.sdlstreaming.videostreaming.CameraToMpegTest;
+import com.smartdevicelink.streaming.video.SdlRemoteDisplay;
+import com.smartdevicelink.streaming.video.VideoStreamingParameters;
 import com.smartdevicelink.transport.BaseTransportConfig;
 import com.smartdevicelink.transport.MultiplexTransportConfig;
+import com.smartdevicelink.transport.TCPTransportConfig;
 import com.smartdevicelink.transport.TransportConstants;
 import com.smartdevicelink.transport.USBTransportConfig;
 import com.smartdevicelink.util.CorrelationIdGenerator;
@@ -111,8 +123,8 @@ public class SdlService extends Service implements IProxyListenerALM{
 
     private static final String TAG 					= "SDL Service";
 
-    private static final String APP_NAME 				= "SdlStreaming";
-    private static final String APP_ID 					= "9035769";
+    private static final String APP_NAME 				= "Antelope";
+    private static final String APP_ID 					= "2160742002";
 
     private static final String ICON_FILENAME 			= "ic_sdl.png";
     private static final boolean WRITING_TO_FILE_MODE      = false;
@@ -125,7 +137,7 @@ public class SdlService extends Service implements IProxyListenerALM{
     private static final int TEST_COMMAND_ID 			= 1;
 
     public static String LOCAL_VIDEO_URI = null;
-    public volatile VirtualDisplayEncoder vdEncoder = new VirtualDisplayEncoder();
+    //public volatile VirtualDisplayEncoder vdEncoder = new VirtualDisplayEncoder();
 
     // variable to create and call functions of the SyncProxy
     private static SdlProxyALM proxy = null;
@@ -167,7 +179,7 @@ public class SdlService extends Service implements IProxyListenerALM{
     public static SdlProxyALM getProxy() {
         return proxy;
     }
-
+    Intent cachedIntent = null;
     public void startProxy(Intent intent) {
         if (proxy == null) {
             try {
@@ -179,9 +191,11 @@ public class SdlService extends Service implements IProxyListenerALM{
                     }
                     //We have a usb transport
                     transport = new USBTransportConfig(getBaseContext(),(UsbAccessory)intent.getParcelableExtra(UsbManager.EXTRA_ACCESSORY));
+                    cachedIntent = intent;
                 }else{
                     //If we don't want anything but USB then would just do a return here and bail
-                    transport = new MultiplexTransportConfig(getBaseContext(), APP_ID);
+                   // transport = new MultiplexTransportConfig(getBaseContext(), APP_ID);
+                    transport = new TCPTransportConfig(12345,"192.168.1.213",true);
                     Log.e(TAG, "Not usb intent. Going to use bluetooth. Glob help us");
                 }
                 Log.d(TAG, "Transport type: " + transport.getTransportType());
@@ -212,7 +226,7 @@ public class SdlService extends Service implements IProxyListenerALM{
      * Create a Presentation class that sets ContentView layout and touch response callbacks
      * Note: It must extend VirtualDisplayEncoder.SdlPresentation!
      */
-    public static class MyPresentation extends VirtualDisplayEncoder.SdlPresentation{
+    public static class MyPresentation extends SdlRemoteDisplay{
 
         public MyPresentation(Context context, Display display) {
             super(context, display);
@@ -226,8 +240,18 @@ public class SdlService extends Service implements IProxyListenerALM{
 
             VideoView videoView = (VideoView) findViewById(R.id.videoView);
 
+            videoView.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    Log.d(TAG, "Received motion event on video view");
+                    Toast.makeText(v.getContext(),"Touch event received: " + event.getX(),Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+            });
             videoView.setVideoURI(Uri.parse(LOCAL_VIDEO_URI));
             videoView.start();
+
+
         }
     }
 
@@ -270,13 +294,14 @@ public class SdlService extends Service implements IProxyListenerALM{
     }
 
     private void startEnhancedVideoStream(){
-        if(vdEncoder != null && proxy != null){
-            try {
+        if(proxy != null){
+            proxy.startRemoteDisplayStream(getApplicationContext(),MyPresentation.class, null, false);
+            /*try {
                 vdEncoder.init(getApplicationContext(), proxy.startH264(false), MyPresentation.class, proxy.getDisplayCapabilities().getScreenParams());
                 vdEncoder.start();
             } catch (Exception e) {
                 e.printStackTrace();
-            }
+            }*/
         }
     }
 
@@ -296,9 +321,7 @@ public class SdlService extends Service implements IProxyListenerALM{
     }
 
     private void stopEnhancedVideoStream(){
-        if(vdEncoder != null){
-            vdEncoder.shutDown();
-        }
+        proxy.stopRemoteDisplayStream();
     }
 
     public void disposeSyncProxy() {
@@ -793,7 +816,10 @@ public class SdlService extends Service implements IProxyListenerALM{
 
     @Override
     public void onServiceEnded(OnServiceEnded serviceEnded) {
-        Log.d(TAG, "Service ended: " + serviceEnded.getSessionType());
+        Log.d(TAG, "Service ended: " + serviceEnded.getSessionType().getName());
+        if(serviceEnded.getSessionType().equals(SessionType.RPC)){
+           startProxy(cachedIntent);
+        }
 
     }
 
@@ -842,6 +868,36 @@ public class SdlService extends Service implements IProxyListenerALM{
 
     @Override
     public void onOnWayPointChange(OnWayPointChange notification) {
+
+    }
+
+    @Override
+    public void onGetSystemCapabilityResponse(GetSystemCapabilityResponse response) {
+
+    }
+
+    @Override
+    public void onGetInteriorVehicleDataResponse(GetInteriorVehicleDataResponse response) {
+
+    }
+
+    @Override
+    public void onButtonPressResponse(ButtonPressResponse response) {
+
+    }
+
+    @Override
+    public void onSetInteriorVehicleDataResponse(SetInteriorVehicleDataResponse response) {
+
+    }
+
+    @Override
+    public void onOnInteriorVehicleData(OnInteriorVehicleData notification) {
+
+    }
+
+    @Override
+    public void onSendHapticDataResponse(SendHapticDataResponse response) {
 
     }
 
