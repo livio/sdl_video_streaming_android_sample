@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 21
-    buildToolsVersion "21.1"
+    buildToolsVersion "26.0.2"
 
     defaultConfig {
         applicationId "com.smartdevicelink.sdlstreaming"
@@ -24,7 +24,7 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile project(path: ':sdl_android')
+    compile 'com.smartdevicelink:sdl_android:4.+'
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
