@@ -296,12 +296,6 @@ public class SdlService extends Service implements IProxyListenerALM{
     private void startEnhancedVideoStream(){
         if(proxy != null){
             proxy.startRemoteDisplayStream(getApplicationContext(),MyPresentation.class, null, false);
-            /*try {
-                vdEncoder.init(getApplicationContext(), proxy.startH264(false), MyPresentation.class, proxy.getDisplayCapabilities().getScreenParams());
-                vdEncoder.start();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }*/
         }
     }
 
