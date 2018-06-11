@@ -245,7 +245,7 @@ public class SdlService extends Service implements IProxyListenerALM{
                 public boolean onTouch(View v, MotionEvent event) {
                     Log.d(TAG, "Received motion event on video view");
                     Toast.makeText(v.getContext(),"Touch event received: " + event.getX(),Toast.LENGTH_SHORT).show();
-                    return false;
+                    return true;
                 }
             });
             videoView.setVideoURI(Uri.parse(LOCAL_VIDEO_URI));
