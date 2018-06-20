@@ -102,6 +102,7 @@ import com.smartdevicelink.proxy.rpc.enums.SdlDisconnectedReason;
 import com.smartdevicelink.proxy.rpc.enums.TextAlignment;
 import com.smartdevicelink.sdlstreaming.R;
 import com.smartdevicelink.sdlstreaming.videostreaming.CameraToMpegTest;
+import com.smartdevicelink.security.SdlSecurityBase;
 import com.smartdevicelink.streaming.video.SdlRemoteDisplay;
 import com.smartdevicelink.streaming.video.VideoStreamingParameters;
 import com.smartdevicelink.transport.BaseTransportConfig;
@@ -146,6 +147,9 @@ public class SdlService extends Service implements IProxyListenerALM{
     private boolean firstNonHmiNone = true;
     boolean layoutSet = false;
     private final boolean ENHANCED_STREAM_CAPABLE = (android.os.Build.VERSION.SDK_INT >= 21);
+
+    List<Class<? extends SdlSecurityBase>> securityLibraries = new ArrayList<>();
+
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -205,6 +209,11 @@ public class SdlService extends Service implements IProxyListenerALM{
                 SdlProxyBuilder.Builder builder = new SdlProxyBuilder.Builder(this, APP_ID, APP_NAME, false,  this);
                 builder.setTransportType(transport);
                 builder.setVrAppHMITypes(appType);
+
+                //If using security, set the library here
+                //securityLibraries.add();    //Add security library here
+                //builder.setSdlSecurity(securityLibraries);
+
                 proxy = builder.build();
 
                 boolean forced = intent !=null && intent.getBooleanExtra(TransportConstants.FORCE_TRANSPORT_CONNECTED, false);
@@ -295,7 +304,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 
     private void startEnhancedVideoStream(){
         if(proxy != null){
-            proxy.startRemoteDisplayStream(getApplicationContext(),MyPresentation.class, null, false);
+            proxy.startRemoteDisplayStream(getApplicationContext(),MyPresentation.class, null, (securityLibraries.size()>0));
         }
     }
 
