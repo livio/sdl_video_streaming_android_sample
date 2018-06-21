@@ -54,8 +54,6 @@
             <intent-filter>
                 <action android:name="com.smartdevicelink.USB_ACCESSORY_ATTACHED" />
                 <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
-                <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
-                <action android:name="android.media.AUDIO_BECOMING_NOISY" />
                 <action android:name="sdl.router.startservice" />
             </intent-filter>
         </receiver>
