@@ -1,20 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.smartdevicelink.sdlstreaming">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.smartdevicelink.sdlstreaming">
 
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <uses-feature android:name="android.hardware.usb.accessory" />
 
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_sdl"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        tools:ignore="GoogleAppIndexingWarning">
         <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait">
@@ -24,6 +26,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="com.smartdevicelink.managers.lockscreen.SDLLockScreenActivity"
+            android:launchMode="singleTop" />
 
         <activity
             android:name="com.smartdevicelink.transport.USBAccessoryAttachmentActivity"
@@ -40,19 +46,20 @@
         <service
             android:name=".sdl.SdlService"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="false" />
+
         <service
             android:name=".sdl.SdlRouterService"
-            android:enabled="true"
             android:exported="true"
-            android:process="com.smartdevicelink.router" />
-
-        <receiver
-            android:name=".sdl.SdlReceiver"
-            android:enabled="true"
-            android:exported="true">
+            android:process="com.smartdevicelink.router">
             <intent-filter>
-                <action android:name="com.smartdevicelink.USB_ACCESSORY_ATTACHED" />
+                <action android:name="com.smartdevicelink.router.service" />
+            </intent-filter>
+            <meta-data android:name="sdl_router_version"  android:value="@integer/sdl_router_service_version_value" />
+        </service>
+
+        <receiver android:name=".sdl.SdlReceiver">
+            <intent-filter>
                 <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
                 <action android:name="sdl.router.startservice" />
             </intent-filter>
