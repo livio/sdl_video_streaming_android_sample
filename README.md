@@ -6,7 +6,7 @@ Download and install the latest release on an Android device. If you plug the de
 Clone and run the project on your Android device. You can try replacing the video we use `sdl.mp4` in the `res/raw` directory with a video of your own with the same name.
 
 ## Notes
-- This app is for testing porposes only. 
+- This app is for testing purposes only. 
 - Touch events are not used in this app.
 - The video stream used is not of the app itself, but a stored, local video file.
 
