@@ -184,7 +184,7 @@ public class SdlService extends Service {
             SdlArtwork appIcon = new SdlArtwork(ICON_FILENAME, FileType.GRAPHIC_PNG, R.drawable.car, true);
 
             // The manager builder sets options for your session
-            if (APP_ID == "") {
+            if (APP_ID.equals("") || APP_NAME.equals("")) {
                 Log.e(TAG, "The App ID is missing, For SmartDeviceLink to work an App ID must be provided");
             } else {
                 SdlManager.Builder builder = new SdlManager.Builder(this, APP_ID, APP_NAME, listener);
