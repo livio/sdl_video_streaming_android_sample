@@ -47,8 +47,8 @@ public class SdlService extends Service {
 
     private static final String TAG 					= "SDL Service";
 
-    private static final String APP_NAME 				= "Antelope";
-    private static final String APP_ID 					= "2160742002";
+    private static final String APP_NAME 				= "";
+    private static final String APP_ID 					= "";
 
     private static final String ICON_FILENAME 			= "ic_sdl.png";
     public static String LOCAL_VIDEO_URI = null;
@@ -184,12 +184,16 @@ public class SdlService extends Service {
             SdlArtwork appIcon = new SdlArtwork(ICON_FILENAME, FileType.GRAPHIC_PNG, R.drawable.car, true);
 
             // The manager builder sets options for your session
-            SdlManager.Builder builder = new SdlManager.Builder(this, APP_ID, APP_NAME, listener);
-            builder.setAppTypes(appType);
-            builder.setTransportType(mtc);
-            builder.setAppIcon(appIcon);
-            sdlManager = builder.build();
-            sdlManager.start();
+            if (APP_ID.isEmpty()) {
+                Log.e(TAG, "The App ID is missing, For SmartDeviceLink to work an App ID must be provided");
+            } else {
+                SdlManager.Builder builder = new SdlManager.Builder(this, APP_ID, APP_NAME, listener);
+                builder.setAppTypes(appType);
+                builder.setTransportType(mtc);
+                builder.setAppIcon(appIcon);
+                sdlManager = builder.build();
+                sdlManager.start();
+            }
         }
     }
 
