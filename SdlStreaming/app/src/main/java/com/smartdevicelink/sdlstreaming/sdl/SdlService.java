@@ -185,7 +185,7 @@ public class SdlService extends Service {
 
             // The manager builder sets options for your session
             if (APP_ID.equals("") || APP_NAME.equals("")) {
-                Log.e(TAG, "The App ID is missing, For SmartDeviceLink to work an App ID must be provided");
+                Log.e(TAG, "The App ID or App Name is missing, For SmartDeviceLink to work an App ID and App Name must be provided");
             } else {
                 SdlManager.Builder builder = new SdlManager.Builder(this, APP_ID, APP_NAME, listener);
                 builder.setAppTypes(appType);
