@@ -13,8 +13,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -22,12 +20,17 @@ import android.view.View;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+
 import com.smartdevicelink.managers.CompletionListener;
 import com.smartdevicelink.managers.SdlManager;
 import com.smartdevicelink.managers.SdlManagerListener;
 import com.smartdevicelink.managers.file.filetypes.SdlArtwork;
 import com.smartdevicelink.managers.lifecycle.LifecycleConfigurationUpdate;
 import com.smartdevicelink.managers.video.VideoStreamManager;
+import com.smartdevicelink.managers.video.resolution.Resolution;
+import com.smartdevicelink.managers.video.resolution.VideoStreamingRange;
 import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCNotification;
 import com.smartdevicelink.proxy.rpc.OnHMIStatus;
@@ -40,6 +43,7 @@ import com.smartdevicelink.sdlstreaming.R;
 import com.smartdevicelink.streaming.video.SdlRemoteDisplay;
 import com.smartdevicelink.transport.MultiplexTransportConfig;
 import com.smartdevicelink.util.DebugTool;
+import com.smartdevicelink.util.SystemInfo;
 
 import java.util.Vector;
 
@@ -111,7 +115,7 @@ public class SdlService extends Service {
     private void startProxy() {
         if (sdlManager == null) {
             Log.i(TAG, "Starting SDL Proxy");
-            MultiplexTransportConfig mtc = new MultiplexTransportConfig(this, APP_ID, MultiplexTransportConfig.FLAG_MULTI_SECURITY_OFF);;
+            MultiplexTransportConfig mtc = new MultiplexTransportConfig(this, APP_ID, MultiplexTransportConfig.FLAG_MULTI_SECURITY_OFF);
             mtc.setRequiresHighBandwidth(true);
             mtc.setRequiresAudioSupport(false);
 
@@ -141,7 +145,9 @@ public class SdlService extends Service {
                                         if(success){
                                             notifyStreaming("Starting to stream");
                                             if(vsm != null){
-                                                vsm.startRemoteDisplayStream(getBaseContext(), MyPresentation.class, null, false );
+                                                VideoStreamingRange allRange = null;
+                                                VideoStreamingRange disabledRange = new VideoStreamingRange(new Resolution(0, 0), new Resolution(0, 0), 0.0, 0.0, 0.0);
+                                                vsm.startRemoteDisplayStream(getBaseContext(), MyPresentation.class, null, false, allRange ,disabledRange);
                                             }else{
                                                 notifyStreaming("vsm was null when starting remote display");
                                             }
@@ -172,10 +178,14 @@ public class SdlService extends Service {
                 }
 
                 @Override
-                public LifecycleConfigurationUpdate managerShouldUpdateLifecycle(Language language) {
+                public LifecycleConfigurationUpdate managerShouldUpdateLifecycle(Language language, Language hmiLanguage) {
                     return null;
                 }
 
+                @Override
+                public boolean onSystemInfoReceived(SystemInfo systemInfo) {
+                    return true;
+                }
 
             };
 
@@ -256,6 +266,11 @@ public class SdlService extends Service {
             });
             videoView.setVideoURI(Uri.parse(LOCAL_VIDEO_URI));
             videoView.start();
+        }
+
+        @Override
+        public void onViewResized(int width, int height) {
+            DebugTool.logInfo(TAG, "View Resized, width:  " + width + " height: " + height);
         }
 
 
