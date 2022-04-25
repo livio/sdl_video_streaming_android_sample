@@ -5,10 +5,21 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"
+      tools:targetApi="31"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <uses-feature android:name="android.hardware.usb.accessory" />
+
+    <queries>
+        <intent>
+            <action android:name="com.smartdevicelink.router.service" />
+        </intent>
+        <intent>
+            <action android:name="sdl.router.startservice" />
+        </intent>
+    </queries>
 
     <application
         android:allowBackup="true"
@@ -19,7 +30,8 @@
         tools:ignore="GoogleAppIndexingWarning">
         <activity
             android:name=".MainActivity"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+          android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -33,7 +45,8 @@
 
         <activity
             android:name="com.smartdevicelink.transport.USBAccessoryAttachmentActivity"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"
+          android:exported="true">
             <intent-filter>
                 <action android:name="android.hardware.usb.action.USB_ACCESSORY_ATTACHED" />
             </intent-filter>
@@ -58,7 +71,8 @@
             <meta-data android:name="sdl_router_version"  android:value="@integer/sdl_router_service_version_value" />
         </service>
 
-        <receiver android:name=".sdl.SdlReceiver">
+        <receiver android:name=".sdl.SdlReceiver"
+          android:exported="true">
             <intent-filter>
                 <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
                 <action android:name="sdl.router.startservice" />
