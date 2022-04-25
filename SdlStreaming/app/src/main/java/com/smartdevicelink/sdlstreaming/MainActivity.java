@@ -31,6 +31,7 @@ public class MainActivity extends Activity {
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (!checkPermission()) {
                 requestPermission();
+                return;
             }
         }
 
@@ -57,6 +58,10 @@ public class MainActivity extends Activity {
                 if (grantResults.length > 0) {
 
                     boolean connectAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                    
+                    if (connectAccepted) {
+                        SdlReceiver.queryForConnectedService(this);
+                    }
 
                     if (!connectAccepted) {
                         Toast.makeText(this, "BLUETOOTH_CONNECT Permission is needed for Bluetooth testing", Toast.LENGTH_LONG).show();
