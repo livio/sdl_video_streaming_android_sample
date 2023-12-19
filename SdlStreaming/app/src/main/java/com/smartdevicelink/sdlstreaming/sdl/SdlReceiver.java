@@ -10,6 +10,7 @@ import android.util.Log;
 import com.smartdevicelink.transport.SdlBroadcastReceiver;
 import com.smartdevicelink.transport.SdlRouterService;
 import com.smartdevicelink.transport.TransportConstants;
+import com.smartdevicelink.util.AndroidTools;
 import com.smartdevicelink.util.DebugTool;
 
 public class SdlReceiver extends SdlBroadcastReceiver {
@@ -34,6 +35,12 @@ public class SdlReceiver extends SdlBroadcastReceiver {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (intent.getParcelableExtra(TransportConstants.PENDING_INTENT_EXTRA) != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    if (!AndroidTools.hasForegroundServiceTypePermission(context)) {
+                        DebugTool.logInfo(TAG, "Permission missing for ForegroundServiceType connected device." + context);
+                        return;
+                    }
+                }
                 PendingIntent pendingIntent = (PendingIntent) intent.getParcelableExtra(TransportConstants.PENDING_INTENT_EXTRA);
                 try {
                     //Here we are allowing the RouterService that is in the Foreground to start the SdlService on our behalf
