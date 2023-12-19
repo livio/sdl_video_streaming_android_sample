@@ -11,6 +11,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"
         tools:targetApi="33"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"
+        tools:targetApi="34"/>
 
     <uses-feature android:name="android.hardware.usb.accessory" />
 
@@ -61,12 +63,14 @@
         <service
             android:name=".sdl.SdlService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
 
         <service
             android:name=".sdl.SdlRouterService"
             android:exported="true"
-            android:process="com.smartdevicelink.router">
+            android:process="com.smartdevicelink.router"
+            android:foregroundServiceType="connectedDevice">
             <intent-filter>
                 <action android:name="com.smartdevicelink.router.service" />
             </intent-filter>
